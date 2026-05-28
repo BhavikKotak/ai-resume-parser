@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<nav class="navbar navbar-dark bg-dark px-4">
+    <span class="navbar-brand fw-bold">Admin Dashboard</span>
+
+    <div>
+        <span class="text-white me-3">
+            Welcome, {{ current_user.username }}
+        </span>
+
+        <a href="/upload" class="btn btn-success btn-sm">Upload Resume</a>
+        <a href="/history" class="btn btn-info btn-sm">History</a>
+        <a href="/export" class="btn btn-warning btn-sm">Export CSV</a>
+        <a href="/logout" class="btn btn-danger btn-sm">Logout</a>
+    </div>
+</nav>
+
+<div class="container-fluid mt-4">
+
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-4">
+            <div class="card dashboard-card bg-primary text-white shadow">
+                <div class="card-body">
+                    <h5>Total Candidates</h5>
+                    <h2>{{ total_candidates }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card dashboard-card bg-success text-white shadow">
+                <div class="card-body">
+                    <h5>Total Users</h5>
+                    <h2>{{ total_users }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card dashboard-card bg-dark text-white shadow">
+                <div class="card-body">
+                    <h5>Total Uploads</h5>
+                    <h2>{{ total_uploads }}</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <form action="/search" method="GET" class="mb-4">
+        <div class="input-group shadow">
+            <input
+                type="text"
+                name="query"
+                class="form-control form-control-lg"
+                placeholder="Search by name, skill, education, experience"
+            >
+            <button class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    <div class="card shadow">
+
+        <div class="card-header bg-white">
+            <h4 class="mb-0">Candidate Records</h4>
+        </div>
+
+        <div class="card-body table-responsive">
+
+            <table class="table table-hover align-middle">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Skills</th>
+                        <th>Status</th>
+                        <th>Experience</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% if candidates %}
+                        {% for candidate in candidates %}
+                        <tr>
+
+                            <td>{{ candidate.name }}</td>
+
+                            <td>{{ candidate.email }}</td>
+
+                            <td>{{ candidate.skills }}</td>
+
+                            <td>
+                                <span class="badge bg-primary">
+                                    {{ candidate.status }}
+                                </span>
+                            </td>
+
+                            <td>{{ candidate.experience }}</td>
+
+                            <td>
+
+                                <a href="/candidate/{{ candidate.id }}"
+                                   class="btn btn-info btn-sm">
+                                   View
+                                </a>
+
+                                <a href="/edit/{{ candidate.id }}"
+                                   class="btn btn-warning btn-sm">
+                                   Edit
+                                </a>
+
+                                <a href="/resume/{{ candidate.resume_filename }}"
+                                   class="btn btn-secondary btn-sm">
+                                   Resume
+                                </a>
+
+                                <form action="/delete/{{ candidate.id }}"
+                                      method="POST"
+                                      style="display:inline;">
+                                    <button class="btn btn-danger btn-sm">
+                                        Delete
+                                    </button>
+                                </form>
+
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                No candidates found.
+                            </td>
+                        </tr>
+                    {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

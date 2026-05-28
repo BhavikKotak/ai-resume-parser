@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="auth-wrapper">
+
+    <div class="auth-card shadow-lg">
+
+        <div class="text-center mb-4">
+            <h1 class="brand-title">Smart Resume Parser</h1>
+            <p class="text-muted">Candidate Management System</p>
+        </div>
+
+        <h3 class="text-center mb-4">Create Account</h3>
+
+        <form method="POST">
+
+            <div class="mb-3">
+                <label>Username</label>
+                <input type="text"
+                       name="username"
+                       class="form-control form-control-lg"
+                       required>
+            </div>
+
+            <div class="mb-3">
+                <label>Email Address</label>
+                <input type="email"
+                       name="email"
+                       class="form-control form-control-lg"
+                       required>
+            </div>
+
+            <div class="mb-3">
+                <label>Password</label>
+                <input type="password"
+                       name="password"
+                       class="form-control form-control-lg"
+                       required>
+            </div>
+
+            <div class="mb-4">
+                <label>Select Role</label>
+                <select name="role" class="form-control form-control-lg">
+                    <option value="candidate">Candidate</option>
+                    <option value="recruiter">Recruiter</option>
+                </select>
+            </div>
+
+            <button class="btn btn-success btn-lg w-100">
+                Register
+            </button>
+
+        </form>
+
+        <p class="text-center mt-4">
+            Already have an account?
+            <a href="/login">Login</a>
+        </p>
+
+    </div>
+
+</div>
+
+{% endblock %}

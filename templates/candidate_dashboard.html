@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<nav class="navbar navbar-dark bg-success px-4">
+    <span class="navbar-brand fw-bold">Candidate Dashboard</span>
+
+    <div>
+        <span class="text-white me-3">
+            Welcome, {{ current_user.username }}
+        </span>
+
+        <a href="/upload" class="btn btn-light btn-sm">
+            Upload Resume
+        </a>
+
+        <a href="/logout" class="btn btn-danger btn-sm">
+            Logout
+        </a>
+    </div>
+</nav>
+
+<div class="container mt-5">
+
+    {% if candidate %}
+
+    <div class="card shadow-lg">
+
+        <div class="card-header bg-white">
+            <h3>My Profile</h3>
+        </div>
+
+        <div class="card-body">
+
+            <p><strong>Name:</strong> {{ candidate.name }}</p>
+
+            <p><strong>Email:</strong> {{ candidate.email }}</p>
+
+            <p><strong>Phone:</strong> {{ candidate.phone }}</p>
+
+            <p><strong>Skills:</strong> {{ candidate.skills }}</p>
+
+            <p><strong>Education:</strong> {{ candidate.education }}</p>
+
+            <p><strong>Experience:</strong> {{ candidate.experience }}</p>
+
+            <p><strong>Certifications:</strong> {{ candidate.certifications }}</p>
+
+            <p><strong>LinkedIn:</strong> {{ candidate.linkedin }}</p>
+
+            <p><strong>GitHub:</strong> {{ candidate.github }}</p>
+
+            <p><strong>Address:</strong> {{ candidate.address }}</p>
+
+            <p><strong>Projects:</strong> {{ candidate.projects }}</p>
+
+            <p>
+                <strong>Application Status:</strong>
+                <span class="badge bg-success">
+                    {{ candidate.status }}
+                </span>
+            </p>
+
+            <p>
+                <strong>Recruiter Notes:</strong>
+                {{ candidate.notes }}
+            </p>
+
+            <a href="/resume/{{ candidate.resume_filename }}"
+               class="btn btn-secondary">
+               View My Resume
+            </a>
+
+        </div>
+
+    </div>
+
+    {% else %}
+
+    <div class="card shadow-lg text-center">
+
+        <div class="card-body p-5">
+
+            <h3>No Resume Uploaded Yet</h3>
+
+            <p class="text-muted">
+                Upload your resume to create your profile.
+            </p>
+
+            <a href="/upload" class="btn btn-success btn-lg">
+                Upload Resume
+            </a>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

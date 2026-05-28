@@ -1,113 +1,445 @@
 import os
+import pandas as pd
 
-from flask import Flask, render_template, request
-
-from parser import extract_text_from_pdf
-
-from extractor import (
-extract_name,
-extract_email,
-extract_phone,
-extract_skills,
-extract_education,
-extract_experience
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    send_from_directory
 )
 
-from models import db, Candidate
+from flask_login import (
+    LoginManager,
+    login_user,
+    logout_user,
+    login_required,
+    current_user
+)
+
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+
+from parser import extract_resume_text
+
+from extractor import (
+    extract_name,
+    extract_email,
+    extract_phone,
+    extract_skills,
+    extract_education,
+    extract_experience,
+    extract_linkedin,
+    extract_github,
+    extract_certifications,
+    extract_projects,
+    extract_address
+)
+
+from models import db, User, Candidate, UploadHistory
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER="resumes"
+app.config["SECRET_KEY"] = "smart_resume_secret"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///smart_resume.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["UPLOAD_FOLDER"] = "resumes"
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
-app.config["UPLOAD_FOLDER"]=UPLOAD_FOLDER
-
-app.config["SQLALCHEMY_DATABASE_URI"]="sqlite:///resume.db"
-
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"]=False
+ALLOWED_EXTENSIONS = {"pdf", "docx"}
 
 db.init_app(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+if not os.path.exists(app.config["UPLOAD_FOLDER"]):
+    os.makedirs(app.config["UPLOAD_FOLDER"])
+
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def is_admin():
+    return current_user.role == "admin"
+
+
+def is_recruiter():
+    return current_user.role == "recruiter"
+
+
+def is_candidate():
+    return current_user.role == "candidate"
 
 
 @app.route("/")
 def home():
+    return redirect(url_for("login"))
+
+
+# REGISTER
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form["username"]
+        email = request.form["email"]
+        password = request.form["password"]
+        role = request.form["role"]
+
+        existing = User.query.filter_by(email=email).first()
+
+        if existing:
+            flash("Email already exists")
+            return redirect(url_for("register"))
+
+        if User.query.count() == 0:
+            role = "admin"
+
+        user = User(
+            username=username,
+            email=email,
+            password=generate_password_hash(password),
+            role=role
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        flash("Registration successful")
+        return redirect(url_for("login"))
+
+    return render_template("register.html")
+
+
+# LOGIN
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+
+            if user.role == "admin":
+                return redirect(url_for("admin_dashboard"))
+
+            elif user.role == "recruiter":
+                return redirect(url_for("recruiter_dashboard"))
+
+            else:
+                return redirect(url_for("candidate_dashboard"))
+
+        flash("Invalid credentials")
+
+    return render_template("login.html")
+
+
+# LOGOUT
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("Logged out successfully")
+    return redirect(url_for("login"))
+
+
+# ADMIN DASHBOARD
+@app.route("/admin/dashboard")
+@login_required
+def admin_dashboard():
+    if current_user.role != "admin":
+        flash("Access denied")
+        return redirect(url_for("candidate_dashboard"))
+
+    candidates = Candidate.query.order_by(
+        Candidate.upload_date.desc()
+    ).all()
+
+    return render_template(
+        "admin_dashboard.html",
+        candidates=candidates,
+        total_candidates=Candidate.query.count(),
+        total_users=User.query.count(),
+        total_uploads=UploadHistory.query.count()
+    )
+
+# RECRUITER DASHBOARD
+@app.route("/recruiter/dashboard")
+@login_required
+def recruiter_dashboard():
+    if current_user.role != "recruiter":
+        flash("Access denied")
+        return redirect(url_for("candidate_dashboard"))
+
+    candidates = Candidate.query.order_by(
+        Candidate.upload_date.desc()
+    ).all()
+
+    return render_template(
+        "recruiter_dashboard.html",
+        candidates=candidates,
+        total_candidates=Candidate.query.count()
+    )
+
+# CANDIDATE DASHBOARD
+@app.route("/candidate/dashboard")
+@login_required
+def candidate_dashboard():
+    if not is_candidate():
+        return redirect(url_for("login"))
+
+    candidate = Candidate.query.filter_by(user_id=current_user.id).first()
+
+    return render_template(
+        "candidate_dashboard.html",
+        candidate=candidate
+    )
+# UPLOAD
+@app.route("/upload", methods=["GET", "POST"])
+@login_required
+def upload_resume():
+    if request.method == "POST":
+        files = request.files.getlist("resume")
+
+        for file in files:
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
+                file.save(filepath)
+
+                text = extract_resume_text(filepath)
+
+                if is_candidate():
+                    existing_candidate = Candidate.query.filter_by(
+                        user_id=current_user.id
+                    ).first()
+
+                    if existing_candidate:
+                        existing_candidate.name = extract_name(text)
+                        existing_candidate.email = extract_email(text)
+                        existing_candidate.phone = extract_phone(text)
+                        existing_candidate.skills = ",".join(extract_skills(text))
+                        existing_candidate.education = extract_education(text)
+                        existing_candidate.experience = extract_experience(text)
+                        existing_candidate.certifications = extract_certifications(text)
+                        existing_candidate.linkedin = extract_linkedin(text)
+                        existing_candidate.github = extract_github(text)
+                        existing_candidate.address = extract_address(text)
+                        existing_candidate.projects = extract_projects(text)
+                        existing_candidate.resume_filename = filename
+
+                    else:
+                        candidate = Candidate(
+                            user_id=current_user.id,
+                            name=extract_name(text),
+                            email=extract_email(text),
+                            phone=extract_phone(text),
+                            skills=",".join(extract_skills(text)),
+                            education=extract_education(text),
+                            experience=extract_experience(text),
+                            certifications=extract_certifications(text),
+                            linkedin=extract_linkedin(text),
+                            github=extract_github(text),
+                            address=extract_address(text),
+                            projects=extract_projects(text),
+                            resume_filename=filename,
+                            status="New",
+                            notes=""
+                        )
+
+                        db.session.add(candidate)
+
+                else:
+                    candidate = Candidate(
+                        name=extract_name(text),
+                        email=extract_email(text),
+                        phone=extract_phone(text),
+                        skills=",".join(extract_skills(text)),
+                        education=extract_education(text),
+                        experience=extract_experience(text),
+                        certifications=extract_certifications(text),
+                        linkedin=extract_linkedin(text),
+                        github=extract_github(text),
+                        address=extract_address(text),
+                        projects=extract_projects(text),
+                        resume_filename=filename,
+                        status="New",
+                        notes=""
+                    )
+
+                    db.session.add(candidate)
+
+                history = UploadHistory(
+                    filename=filename,
+                    uploaded_by=current_user.username
+                )
+
+                db.session.add(history)
+
+        db.session.commit()
+
+        flash("Resume uploaded successfully")
+
+        if is_admin():
+            return redirect(url_for("admin_dashboard"))
+
+        elif is_recruiter():
+            return redirect(url_for("recruiter_dashboard"))
+
+        else:
+            return redirect(url_for("candidate_dashboard"))
 
     return render_template("upload.html")
 
 
-@app.route("/upload",methods=["POST"])
-def upload_resume():
+# SEARCH
+@app.route("/search")
+@login_required
+def search():
+    if is_candidate():
+        flash("Access denied")
+        return redirect(url_for("candidate_dashboard"))
 
-    file=request.files["resume"]
+    query = request.args.get("query", "")
 
-    filepath=os.path.join(app.config["UPLOAD_FOLDER"],file.filename)
+    candidates = Candidate.query.filter(
+        (Candidate.name.like(f"%{query}%")) |
+        (Candidate.skills.like(f"%{query}%")) |
+        (Candidate.education.like(f"%{query}%"))
+    ).all()
 
-    file.save(filepath)
+    if is_admin():
+        return render_template(
+            "admin_dashboard.html",
+            candidates=candidates,
+            total_candidates=Candidate.query.count(),
+            total_users=User.query.count(),
+            total_uploads=UploadHistory.query.count()
+        )
 
-    text=extract_text_from_pdf(filepath)
-
-    name=extract_name(text)
-
-    email=extract_email(text)
-
-    phone=extract_phone(text)
-
-    skills=extract_skills(text)
-
-    education=extract_education(text)
-
-    experience=extract_experience(text)
-
-    candidate=Candidate(
-
-        name=name,
-
-        email=email,
-
-        phone=phone,
-
-        skills=",".join(skills),
-
-        education=education,
-
-        experience=experience
-
+    return render_template(
+        "recruiter_dashboard.html",
+        candidates=candidates,
+        total_candidates=len(candidates)
     )
 
-    db.session.add(candidate)
+# CANDIDATE DETAIL
+@app.route("/candidate/<int:id>")
+@login_required
+def candidate_detail(id):
+    candidate = Candidate.query.get_or_404(id)
 
-    db.session.commit()
+    if is_candidate():
+        if candidate.user_id != current_user.id:
+            flash("Access denied")
+            return redirect(url_for("candidate_dashboard"))
 
-    return render_template("result.html",
-                           name=name,
-                           email=email,
-                           phone=phone,
-                           skills=skills,
-                           education=education,
-                           experience=experience)
-
-
-@app.route("/dashboard")
-def dashboard():
-
-    candidates=Candidate.query.all()
-
-    return render_template("dashboard.html",candidates=candidates)
+    return render_template("candidate_detail.html", candidate=candidate)
 
 
-@app.route("/search")
-def search():
+# EDIT
+@app.route("/edit/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit_candidate(id):
+    candidate = Candidate.query.get_or_404(id)
 
-    skill=request.args.get("skill")
+    if is_candidate():
+        if candidate.user_id != current_user.id:
+            flash("Access denied")
+            return redirect(url_for("candidate_dashboard"))
 
-    candidates=Candidate.query.filter(Candidate.skills.like(f"%{skill}%")).all()
+    if request.method == "POST":
+        candidate.name = request.form["name"]
+        candidate.email = request.form["email"]
+        candidate.phone = request.form["phone"]
+        candidate.skills = request.form["skills"]
+        candidate.education = request.form["education"]
+        candidate.experience = request.form["experience"]
+        candidate.certifications = request.form["certifications"]
+        candidate.linkedin = request.form["linkedin"]
+        candidate.github = request.form["github"]
+        candidate.address = request.form["address"]
+        candidate.projects = request.form["projects"]
+        candidate.status = request.form["status"]
+        candidate.notes = request.form["notes"]
 
-    return render_template("dashboard.html",candidates=candidates)
+        db.session.commit()
+
+        flash("Candidate updated")
+
+        if is_candidate():
+            return redirect(url_for("candidate_dashboard"))
+
+        elif is_admin():
+            return redirect(url_for("admin_dashboard"))
+
+        else:
+            return redirect(url_for("recruiter_dashboard"))
+
+    return render_template("edit_candidate.html", candidate=candidate)
+
+@app.route("/history")
+@login_required
+def history():
+    if current_user.role != "admin":
+        flash("Access denied")
+        return redirect(url_for("candidate_dashboard"))
+
+    uploads = UploadHistory.query.order_by(
+        UploadHistory.upload_date.desc()
+    ).all()
+
+    return render_template("history.html", uploads=uploads)
 
 
-if __name__=="__main__":
+@app.route("/export")
+@login_required
+def export_csv():
+    if current_user.role != "admin":
+        flash("Access denied")
+        return redirect(url_for("candidate_dashboard"))
 
+    candidates = Candidate.query.all()
+
+    data = []
+
+    for c in candidates:
+        data.append({
+            "Name": c.name,
+            "Email": c.email,
+            "Phone": c.phone,
+            "Skills": c.skills,
+            "Status": c.status
+        })
+
+    df = pd.DataFrame(data)
+    df.to_csv("candidates.csv", index=False)
+
+    return send_from_directory(".", "candidates.csv", as_attachment=True)
+
+
+@app.route("/resume/<filename>")
+@login_required
+def view_resume(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
+
+if __name__ == "__main__":
     with app.app_context():
-
         db.create_all()
 
     app.run(debug=True)

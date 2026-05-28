@@ -1,0 +1,146 @@
+body {
+    background: #f5f7fb;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #2c3e50;
+}
+
+/* AUTH PAGES */
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    padding: 20px;
+}
+
+.auth-card {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    padding: 40px;
+    border-radius: 20px;
+}
+
+.brand-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1e3c72;
+}
+
+/* NAVBAR */
+.navbar {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+/* DASHBOARD CARDS */
+.dashboard-card {
+    border: none;
+    border-radius: 18px;
+    transition: 0.3s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-6px);
+}
+
+/* TABLES */
+.table {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.table th {
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    vertical-align: middle;
+    font-size: 14px;
+}
+
+/* CARDS */
+.card {
+    border: none;
+    border-radius: 18px;
+}
+
+.card-header {
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+}
+
+/* BUTTONS */
+.btn {
+    border-radius: 10px;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+/* FORM CONTROLS */
+.form-control,
+.form-select,
+textarea {
+    border-radius: 12px;
+    border: 1px solid #dce3ea;
+    padding: 12px;
+}
+
+.form-control:focus,
+.form-select:focus,
+textarea:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13,110,253,.15);
+    border-color: #86b7fe;
+}
+
+/* BADGES */
+.badge {
+    padding: 8px 12px;
+    font-size: 12px;
+    border-radius: 20px;
+}
+
+/* ALERTS */
+.alert {
+    border-radius: 12px;
+}
+
+/* DETAIL PAGE */
+.card-body p {
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.card-body p:last-child {
+    border-bottom: none;
+}
+
+/* FILE INPUT */
+input[type="file"] {
+    padding: 12px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .auth-card {
+        padding: 25px;
+    }
+
+    .brand-title {
+        font-size: 24px;
+    }
+
+    .navbar .btn {
+        margin-top: 5px;
+    }
+
+    .table td,
+    .table th {
+        font-size: 12px;
+    }
+}

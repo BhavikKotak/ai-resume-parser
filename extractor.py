@@ -1,151 +1,170 @@
-import spacy
 import re
 
-nlp = spacy.load("en_core_web_sm")
-
-skills_list = [
+SKILLS_LIST = [
     "python",
     "java",
     "sql",
-    "django",
+    "mysql",
+    "sqlite",
     "flask",
-    "machine learning",
-    "data analysis",
+    "django",
     "html",
     "css",
     "javascript",
-    "c",
-    "c++",
-    "git",
+    "bootstrap",
     "react",
     "node",
+    "git",
+    "github",
+    "c",
+    "c++",
+    "php",
+    "pandas",
+    "numpy",
+    "excel",
+    "power bi"
 ]
 
-# ---------------------------
-# EMAIL EXTRACTION
-# ---------------------------
 
 def extract_email(text):
+    emails = re.findall(
+        r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',
+        text
+    )
+    return emails[0] if emails else "Not Found"
 
-    emails = re.findall(r'\S+@\S+', text)
-
-    if emails:
-        return emails[0]
-
-    return "Not Found"
-
-
-# ---------------------------
-# PHONE EXTRACTION
-# ---------------------------
 
 def extract_phone(text):
+    phones = re.findall(
+        r'(\+?\d[\d\s\-]{8,15})',
+        text
+    )
+    return phones[0] if phones else "Not Found"
 
-    phones = re.findall(r'\+?\d[\d -]{8,12}\d', text)
-
-    if phones:
-        return phones[0]
-
-    return "Not Found"
-
-
-# ---------------------------
-# NAME EXTRACTION
-# ---------------------------
 
 def extract_name(text):
-
     lines = text.split("\n")
 
-    for line in lines[:5]:
-
+    for line in lines[:8]:
         line = line.strip()
 
-        if len(line.split()) <= 3 and len(line) > 2:
-
+        if (
+            len(line.split()) <= 4
+            and len(line) > 3
+            and "resume" not in line.lower()
+        ):
             return line
 
     return "Not Found"
 
 
-# ---------------------------
-# SKILL EXTRACTION
-# ---------------------------
-
 def extract_skills(text):
-
     text = text.lower()
+    found = []
 
-    found_skills = []
-
-    for skill in skills_list:
-
+    for skill in SKILLS_LIST:
         if skill in text:
+            found.append(skill)
 
-            found_skills.append(skill)
+    return list(set(found))
 
-    return found_skills
-
-
-# ---------------------------
-# EDUCATION EXTRACTION
-# ---------------------------
 
 def extract_education(text):
-
-    education_patterns = [
+    patterns = [
         r'b\.?tech',
         r'b\.?e',
         r'bachelor',
         r'm\.?tech',
         r'master',
-        r'm\.?sc',
-        r'b\.?sc',
-        r'ph\.?d',
-        r'diploma'
+        r'diploma',
+        r'engineering'
     ]
 
     text = text.lower()
 
-    for pattern in education_patterns:
+    found = []
 
-        match = re.search(pattern, text)
+    for pattern in patterns:
+        matches = re.findall(pattern, text)
+        found.extend(matches)
 
-        if match:
+    return ", ".join(list(set(found))) if found else "Not Found"
 
-            return match.group()
-
-    return "Not Found"
-
-
-# ---------------------------
-# EXPERIENCE EXTRACTION
-# ---------------------------
 
 def extract_experience(text):
-
     text = text.lower()
 
     patterns = [
         r'(\d+)\+?\s*years',
         r'(\d+)\+?\s*year',
-        r'(\d+)\s*yrs'
+        r'(\d+)\s*months'
     ]
 
     for pattern in patterns:
-
         match = re.search(pattern, text)
-
         if match:
-
             return match.group()
 
     if "fresher" in text:
-
         return "Fresher"
 
     if "internship" in text:
-
         return "Internship"
+
+    return "Not Found"
+
+
+def extract_linkedin(text):
+    match = re.search(
+        r'https?://(www\.)?linkedin\.com/in/[^\s]+',
+        text
+    )
+    return match.group() if match else "Not Found"
+
+
+def extract_github(text):
+    match = re.search(
+        r'https?://(www\.)?github\.com/[^\s]+',
+        text
+    )
+    return match.group() if match else "Not Found"
+
+
+def extract_certifications(text):
+    keywords = [
+        "certificate",
+        "certification",
+        "aws",
+        "coursera",
+        "udemy"
+    ]
+
+    found = []
+
+    lower = text.lower()
+
+    for keyword in keywords:
+        if keyword in lower:
+            found.append(keyword)
+
+    return ", ".join(found) if found else "Not Found"
+
+
+def extract_projects(text):
+    if "project" in text.lower():
+        return "Project Section Found"
+
+    return "Not Found"
+
+
+def extract_address(text):
+    lines = text.split("\n")
+
+    keywords = ["road", "street", "india", "gujarat"]
+
+    for line in lines[:20]:
+        for keyword in keywords:
+            if keyword in line.lower():
+                return line.strip()
 
     return "Not Found"

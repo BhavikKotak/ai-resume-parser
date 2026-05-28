@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <div class="card shadow-lg">
+
+        <div class="card-header bg-dark text-white">
+            <h3>{{ candidate.name }}</h3>
+        </div>
+
+        <div class="card-body">
+
+            <p><strong>Email:</strong> {{ candidate.email }}</p>
+            <p><strong>Phone:</strong> {{ candidate.phone }}</p>
+            <p><strong>Skills:</strong> {{ candidate.skills }}</p>
+            <p><strong>Education:</strong> {{ candidate.education }}</p>
+            <p><strong>Experience:</strong> {{ candidate.experience }}</p>
+            <p><strong>Certifications:</strong> {{ candidate.certifications }}</p>
+            <p><strong>LinkedIn:</strong> {{ candidate.linkedin }}</p>
+            <p><strong>GitHub:</strong> {{ candidate.github }}</p>
+            <p><strong>Address:</strong> {{ candidate.address }}</p>
+            <p><strong>Projects:</strong> {{ candidate.projects }}</p>
+            <p><strong>Status:</strong> {{ candidate.status }}</p>
+            <p><strong>Notes:</strong> {{ candidate.notes }}</p>
+
+            <a href="/resume/{{ candidate.resume_filename }}"
+               class="btn btn-secondary">
+               View Resume
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

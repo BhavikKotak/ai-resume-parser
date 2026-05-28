@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<nav class="navbar navbar-dark bg-dark px-4">
+    <span class="navbar-brand fw-bold">Upload History</span>
+
+    <div>
+        <a href="/admin/dashboard" class="btn btn-primary btn-sm">
+            Dashboard
+        </a>
+
+        <a href="/logout" class="btn btn-danger btn-sm">
+            Logout
+        </a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header bg-white">
+            <h4 class="mb-0">Resume Upload Records</h4>
+        </div>
+
+        <div class="card-body table-responsive">
+
+            <table class="table table-hover">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th>File Name</th>
+                        <th>Uploaded By</th>
+                        <th>Upload Date</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% if uploads %}
+                        {% for upload in uploads %}
+                        <tr>
+                            <td>{{ upload.filename }}</td>
+                            <td>{{ upload.uploaded_by }}</td>
+                            <td>{{ upload.upload_date }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center">
+                                No upload history found.
+                            </td>
+                        </tr>
+                    {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

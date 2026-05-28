@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<nav class="navbar navbar-dark bg-primary px-4">
+    <span class="navbar-brand fw-bold">Recruiter Dashboard</span>
+
+    <div>
+        <span class="text-white me-3">
+            Welcome, {{ current_user.username }}
+        </span>
+
+        <a href="/upload" class="btn btn-light btn-sm">Upload Resume</a>
+        <a href="/logout" class="btn btn-danger btn-sm">Logout</a>
+    </div>
+</nav>
+
+<div class="container-fluid mt-4">
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card dashboard-card bg-success text-white shadow">
+                <div class="card-body">
+                    <h5>Total Candidates</h5>
+                    <h2>{{ total_candidates }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form action="/search" method="GET" class="mb-4">
+        <div class="input-group shadow">
+            <input
+                type="text"
+                name="query"
+                class="form-control form-control-lg"
+                placeholder="Search candidates"
+            >
+            <button class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    <div class="card shadow">
+
+        <div class="card-header bg-white">
+            <h4>Candidate Records</h4>
+        </div>
+
+        <div class="card-body table-responsive">
+
+            <table class="table table-hover">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Skills</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% if candidates %}
+                        {% for candidate in candidates %}
+                        <tr>
+
+                            <td>{{ candidate.name }}</td>
+                            <td>{{ candidate.email }}</td>
+                            <td>{{ candidate.skills }}</td>
+
+                            <td>
+                                <span class="badge bg-success">
+                                    {{ candidate.status }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <a href="/candidate/{{ candidate.id }}"
+                                   class="btn btn-info btn-sm">
+                                   View
+                                </a>
+
+                                <a href="/edit/{{ candidate.id }}"
+                                   class="btn btn-warning btn-sm">
+                                   Edit
+                                </a>
+
+                                <a href="/resume/{{ candidate.resume_filename }}"
+                                   class="btn btn-secondary btn-sm">
+                                   Resume
+                                </a>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                No candidates found.
+                            </td>
+                        </tr>
+                    {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

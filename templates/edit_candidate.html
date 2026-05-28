@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <div class="card shadow-lg">
+
+        <div class="card-header bg-warning">
+            <h3>Edit Candidate</h3>
+        </div>
+
+        <div class="card-body">
+
+            <form method="POST">
+
+                <input type="text" name="name" value="{{ candidate.name }}" class="form-control mb-3">
+
+                <input type="email" name="email" value="{{ candidate.email }}" class="form-control mb-3">
+
+                <input type="text" name="phone" value="{{ candidate.phone }}" class="form-control mb-3">
+
+                <textarea name="skills" class="form-control mb-3">{{ candidate.skills }}</textarea>
+
+                <textarea name="education" class="form-control mb-3">{{ candidate.education }}</textarea>
+
+                <textarea name="experience" class="form-control mb-3">{{ candidate.experience }}</textarea>
+
+                <textarea name="certifications" class="form-control mb-3">{{ candidate.certifications }}</textarea>
+
+                <input type="text" name="linkedin" value="{{ candidate.linkedin }}" class="form-control mb-3">
+
+                <input type="text" name="github" value="{{ candidate.github }}" class="form-control mb-3">
+
+                <textarea name="address" class="form-control mb-3">{{ candidate.address }}</textarea>
+
+                <textarea name="projects" class="form-control mb-3">{{ candidate.projects }}</textarea>
+
+                <select name="status" class="form-control mb-3">
+                    <option {% if candidate.status == "New" %}selected{% endif %}>New</option>
+                    <option {% if candidate.status == "Shortlisted" %}selected{% endif %}>Shortlisted</option>
+                    <option {% if candidate.status == "Interview Scheduled" %}selected{% endif %}>Interview Scheduled</option>
+                    <option {% if candidate.status == "Selected" %}selected{% endif %}>Selected</option>
+                    <option {% if candidate.status == "Rejected" %}selected{% endif %}>Rejected</option>
+                </select>
+
+                <textarea name="notes" class="form-control mb-4">{{ candidate.notes }}</textarea>
+
+                <button class="btn btn-success">
+                    Update Candidate
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
