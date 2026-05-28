@@ -38,8 +38,6 @@ from extractor import (
     extract_address
 )
 
-from models import db, User, Candidate, UploadHistory
-
 app = Flask(__name__)
 
 app.config["SECRET_KEY"] = "smart_resume_secret"
