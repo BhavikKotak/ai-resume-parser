@@ -110,8 +110,11 @@ def register():
             role=role
         )
 
-        db.session.add(user)
-        db.session.commit()
+        try:
+            db.session.add(user)
+            db.session.commit()
+        except Exception as e:
+            return str(e)
 
         flash("Registration successful")
         return redirect(url_for("login"))
